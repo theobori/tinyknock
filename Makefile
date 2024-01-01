@@ -14,7 +14,7 @@ USER_SKEL = $(SRC_DIR)/$(TARGET:=.skel.h)
 BPF_C = $(SRC_DIR)/tinyknock.bpf.c
 BPF_OBJ = $(BPF_C:.c=.o)
 
-CFLAGS = -Wall 
+CFLAGS = -Wall -g
 
 all: $(TARGET) $(BPF_OBJ)
 

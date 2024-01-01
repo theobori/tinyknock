@@ -14,13 +14,14 @@ int main(int argc, char *argv[])
 {
 	struct tinyknock_bpf *obj = NULL;
 	configuration_t *config = NULL;
+
 	int err;
 	int fd;
 
 	// check the CLI arguments
 	if (argc != ARG_COUNT) {
 		fprintf(stderr, "Usage:\n");
-		fprintf(stderr, "  %s <path>\n", argv[ARG_PROG_NAME]);
+		fprintf(stderr, "  %s <PATH>\n", argv[ARG_PROG_NAME]);
 		
 		return EXIT_FAILURE;
 	}
