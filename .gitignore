@@ -58,3 +58,6 @@ tinyknock
 # Linux header
 vmlinux.h
 examples
+
+# Visual Studio Code
+.vscode
