@@ -10,5 +10,5 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 SEC("xdp")
 int xdp_basic(struct xdp_md *ctx)
 {
-	return XDP_PASS;
+	return XDP_DROP;
 }

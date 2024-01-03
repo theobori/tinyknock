@@ -7,7 +7,10 @@ ARCH = $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/')
 SRC_DIR = src
 
 USER_C = $(SRC_DIR)/main.c \
-		 $(SRC_DIR)/configuration.c
+		 $(SRC_DIR)/configuration/configuration.c \
+		 $(SRC_DIR)/argparse/argparse.c \
+		 $(SRC_DIR)/arguments/arguments.c
+
 USER_OBJ = $(USER_C:.c=.o)
 USER_SKEL = $(SRC_DIR)/$(TARGET:=.skel.h)
 
@@ -19,7 +22,7 @@ CFLAGS = -Wall -g
 all: $(TARGET) $(BPF_OBJ)
 
 $(TARGET): $(USER_SKEL) $(USER_OBJ)
-	$(CC) -Wall -o $(TARGET) $(USER_OBJ) -lbpf -lelf -lz -lcyaml
+	$(CC) -Wall -o $(TARGET) $(USER_OBJ) -lbpf -lelf -lz -lcyaml -lxdp
 
 $(BPF_OBJ): %.o: $(BPF_C) $(SRC_DIR)/vmlinux.h
 	$(CC) \

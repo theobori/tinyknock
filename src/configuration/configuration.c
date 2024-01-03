@@ -4,9 +4,6 @@
 #include "configuration.h"
 
 static const cyaml_schema_field_t top_mapping_schema[] = {
-	CYAML_FIELD_STRING_PTR("network_interface", CYAML_FLAG_POINTER,
-			configuration_t, network_interface,
-			0, CYAML_UNLIMITED),
 	CYAML_FIELD_END
 };
 
@@ -31,11 +28,11 @@ const cyaml_schema_value_t *get_top_schema()
 	return &top_schema;
 }
 
-int tinyknock_configuration_init(configuration_t **config, char *path)
+int tinyknock_configuration_init(configuration_t **config, const char *path)
 {
 	cyaml_err_t err;
 
-	if (path == NULL) {
+	if (!path) {
 		return EXIT_FAILURE;
 	}
 
