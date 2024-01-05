@@ -33,6 +33,7 @@ int tinyknock_configuration_init(configuration_t **config, const char *path)
 	cyaml_err_t err;
 
 	if (!path) {
+		fprintf(stderr, "missing YAML file\n");
 		return EXIT_FAILURE;
 	}
 
@@ -40,7 +41,7 @@ int tinyknock_configuration_init(configuration_t **config, const char *path)
 			&top_schema, (cyaml_data_t **)config, NULL);
 	
 	if (err != CYAML_OK) {
-		fprintf(stderr, "ERROR: %s\n", cyaml_strerror(err));
+		fprintf(stderr, "%s\n", cyaml_strerror(err));
 		return EXIT_FAILURE;
 	}
 

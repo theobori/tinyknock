@@ -5,12 +5,14 @@
 #include "../argparse/argparse.h"
 #include "./arguments.h"
 
+/**
+ * @brief CLI usage
+ * 
+ */
 static const char *const usages[] = {
     "tinyknock [options]",
     NULL,
 };
-
-#define DESCRIPTION "\nA brief description of what the program does and how it works."
 
 void arguments_parse(arguments_t *arguments, int argc, const char *argv[])
 {
@@ -21,6 +23,7 @@ void arguments_parse(arguments_t *arguments, int argc, const char *argv[])
         OPT_STRING('f', "file", &arguments->file, "Policies YAML file path", NULL, 0, 0),
         OPT_STRING('i', "ifname", &arguments->ifname, "Network interface name", NULL, 0, 0),
         OPT_STRING('b', "bpf-file", &arguments->bpf_object_file, "BPF object file path", NULL, 0, 0),
+        OPT_INTEGER('d', "detach", &arguments->xdp_prog_id, "Detach an XDP program from a network interface (with its ID)", NULL, 0, 0),
         OPT_END(),
     };
 
@@ -38,6 +41,5 @@ arguments_t arguments_create_and_parse(int argc, const char *argv[]) {
 }
 
 bool arguments_check(arguments_t *arguments) {
-    return arguments->file && arguments->ifname
-        && arguments->bpf_object_file;
+    return arguments->ifname;
 }
