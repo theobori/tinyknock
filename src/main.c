@@ -62,10 +62,10 @@ static int xdp_init(unsigned int ifindex, char *filename) {
 
 	// Attach the XDP program
 	err = xdp_program__attach(xdp_prog, ifindex, XDP_MODE_SKB, 0);
-    if (err) {
-        printf("Error, Set xdp fd on %d failed\n", ifindex);
-        return err;
-    }
+	if (err) {
+		printf("Error, Set xdp fd on %d failed\n", ifindex);
+		return err;
+	}
 
 	// Get the BPF object for later
 	obj = xdp_program__bpf_obj(xdp_prog);
@@ -90,7 +90,7 @@ int main(int argc, const char *argv[])
 	
 	unsigned int ifindex = 0;
 	configuration_t *config = NULL;
-    arguments_t arguments = arguments_create_and_parse(argc, argv);
+	arguments_t arguments = arguments_create_and_parse(argc, argv);
 	
 	if (argc < ARG_COUNT || !arguments_check(&arguments)) {
 		fprintf(stderr, "Check the -h|--help flag\n");
@@ -99,10 +99,10 @@ int main(int argc, const char *argv[])
 
 	// Check if the network interface exist
 	ifindex = if_nametoindex(arguments.ifname);
-    if (!ifindex) {
-        printf("get ifindex from interface name failed\n");
-        return EXIT_FAILURE;
-    }
+	if (!ifindex) {
+		printf("get ifindex from interface name failed\n");
+		return EXIT_FAILURE;
+	}
 
 	// Detach XDP prog if --detach is set
 	if (arguments.xdp_prog_id)
@@ -120,8 +120,8 @@ int main(int argc, const char *argv[])
 	
 	// Fill XFSM
 	xfsm_fd = bpf_object__find_map_fd_by_name(obj, "xfsm");
-    if (xfsm_fd < 0)
-        return EXIT_FAILURE;
+	if (xfsm_fd < 0)
+		return EXIT_FAILURE;
 
 	err = rule_xfsm_fill_bpf_map(xfsm_fd, config);
 	if (err)
