@@ -17,20 +17,20 @@ typedef struct sequence_key_s {
  * 
  */
 typedef struct sequence_value_s {
-    signed char step;
+    __u8 step;
     __u16 last_port;
-    __u8 padding1;
+    __u8 unused;
 } sequence_value_t;
 /**
  * @brief XFSML table key
  * 
  */
 typedef struct xfsm_key_s {
-    signed char step;
-    __u8 proto; // 16
-    __u16 last_port; // 32
-    __u16 port; // 48
-    __u16 padding;
+    __u8 step;
+    __u8 protocol;
+    __u16 last_port;
+    __u16 port;
+    __u16 unused;
 } xfsm_key_t;
 /**
  * @brief XFSM table value
@@ -42,16 +42,23 @@ typedef struct xfsm_value_s {
     __u16 next_port;
 } xfsm_value_t;
 
+/**
+ * @brief Target key
+ * 
+ */
 typedef struct target_key_s {
     __u32 addr;
     __u16 port;
-    __u16 padding;
+    __u16 unused;
 } target_key_t;
 
+/**
+ * @brief Target value
+ * 
+ */
 typedef struct target_value_s {
     __u8 action;
-    __u8 padding1;
-    __u16 padding2;
+    const char unused[24];
 } target_value_t;
 
 /**

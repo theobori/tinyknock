@@ -13,9 +13,15 @@
 
 #include <asm-generic/errno-base.h>
 
+#include "event/sequence_event.h"
 #include "./rule/rule.h"
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
+
+struct {
+    __uint(type, BPF_MAP_TYPE_RINGBUF);
+    __uint(max_entries, 1);
+} sequence_rb SEC(".maps");
 
 struct {
 	__uint(type, BPF_MAP_TYPE_HASH);
@@ -38,6 +44,14 @@ struct {
 	__uint(max_entries, 32);
 } target SEC(".maps");
 
+/**
+ * @brief Parse Ethernet header
+ * 
+ * @param cursor 
+ * @param ethhdr 
+ * @param data_end 
+ * @return int 
+ */
 static __always_inline int parse_ethhdr(void **cursor, struct ethhdr **ethhdr,
     void *data_end)
 {
@@ -53,6 +67,14 @@ static __always_inline int parse_ethhdr(void **cursor, struct ethhdr **ethhdr,
 	return bpf_htons(eth->h_proto);
 }
 
+/**
+ * @brief Parse IP header
+ * 
+ * @param cursor 
+ * @param ip 
+ * @param data_end 
+ * @return int 
+ */
 static __always_inline int parse_iphdr(void **cursor, struct iphdr **ip,
     void *data_end)
 {
@@ -62,6 +84,17 @@ static __always_inline int parse_iphdr(void **cursor, struct iphdr **ip,
     return *cursor > data_end;
 }
 
+/**
+ * @brief Parse UDP/TCP header.
+ * 
+ *  This function is also used for TCP because the `dest` field is
+ * at the same location.
+ * 
+ * @param cursor 
+ * @param udp 
+ * @param data_end 
+ * @return int 
+ */
 static __always_inline int parse_udphdr(void **cursor, struct udphdr **udp,
     void *data_end)
 {
@@ -71,6 +104,14 @@ static __always_inline int parse_udphdr(void **cursor, struct udphdr **udp,
     return *cursor > data_end;
 }
 
+/**
+ * @brief Check if the `port` if allowed from a specific `addr`
+ * 
+ * @param addr 
+ * @param port 
+ * @param protocol 
+ * @return enum xdp_action
+ */
 static __always_inline enum xdp_action target_port_xdp_action(__u32 addr,
 __u16 port, __u8 protocol)
 {
@@ -83,6 +124,41 @@ __u16 port, __u8 protocol)
     return ((target_value_t *) lookup)->action;
 }
 
+/**
+ * @brief Submit event to the ring buffer
+ * 
+ * @param port 
+ * @param xv 
+ * @param step 
+ * @param protocol 
+ * @return void 
+ */
+static __always_inline void sequence_rb_submit(__u16 port,
+    xfsm_value_t *xv, __u8 step, __u8 protocol)
+{
+    sequence_event_t *event = bpf_ringbuf_reserve(&sequence_rb,
+        sizeof(*event), 0);
+
+    if (!event)
+        return;
+
+    event->port = port;
+    event->step = step;
+    event->is_target = xv->is_next_target;
+    event->next_port = xv->next_port;
+    event->protocol = protocol;
+
+    bpf_ringbuf_submit(event, 0);
+}
+
+/**
+ * @brief Check for `addr` sequence
+ * 
+ * @param addr 
+ * @param port 
+ * @param protocol 
+ * @return void 
+ */
 static __always_inline void sequence_xdp_action(__u32 addr, __u16 port,
     __u8 protocol)
 {
@@ -120,8 +196,18 @@ static __always_inline void sequence_xdp_action(__u32 addr, __u16 port,
     sv.last_port = port;
 
     bpf_map_update_elem(&sequence, &sk, &sv, BPF_ANY);
+
+    sequence_rb_submit(port, xv, sv.step, protocol);
 }
 
+/**
+ * @brief Filter the `addr` with `port`
+ * 
+ * @param addr 
+ * @param port 
+ * @param protocol 
+ * @return enum xdp_action
+ */
 static __always_inline enum xdp_action filter_xdp_action(__u32 addr,
     __u16 port, __u8 protocol)
 {
@@ -130,6 +216,14 @@ static __always_inline enum xdp_action filter_xdp_action(__u32 addr,
     return target_port_xdp_action(addr, port, protocol);
 }
 
+/**
+ * @brief Filter the `addr` with `port` for the UDP protocol
+ * 
+ * @param cursor 
+ * @param ip 
+ * @param data_end 
+ * @return __always_inline enum 
+ */
 static __always_inline enum xdp_action filter_udp_xdp_action(void **cursor,
     struct iphdr *ip, void *data_end)
 {
@@ -144,7 +238,13 @@ static __always_inline enum xdp_action filter_udp_xdp_action(void **cursor,
 }
 
 SEC("xdp")
-int xdp_port_knock(struct xdp_md *ctx)
+/**
+ * @brief XDP program
+ * 
+ * @param ctx 
+ * @return enum xdp_action 
+ */
+enum xdp_action xdp_port_knock(struct xdp_md *ctx)
 {
     int err, p;
 
