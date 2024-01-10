@@ -242,9 +242,9 @@ SEC("xdp")
  * @brief XDP program
  * 
  * @param ctx 
- * @return enum xdp_action 
+ * @return int
  */
-enum xdp_action xdp_port_knock(struct xdp_md *ctx)
+int xdp_port_knock(struct xdp_md *ctx)
 {
     int err, p;
 
