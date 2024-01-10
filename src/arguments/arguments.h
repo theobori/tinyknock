@@ -28,6 +28,7 @@ typedef struct arguments_s {
  * @param argv 
  */
 void arguments_parse(arguments_t *arguments, int argc, const char *argv[]);
+
 /**
  * @brief Parse CLI arguments and return the associated needed data
  * 
@@ -36,6 +37,7 @@ void arguments_parse(arguments_t *arguments, int argc, const char *argv[]);
  * @return arguments_t 
  */
 arguments_t arguments_create_and_parse(int argc, const char *argv[]);
+
 /**
  * @brief Verify if the arguments have the data it requires
  * 

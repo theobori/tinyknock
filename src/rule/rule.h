@@ -58,7 +58,7 @@ typedef struct target_key_s {
  */
 typedef struct target_value_s {
     __u8 action;
-    const char unused[24];
+    const __u8 unused[3];
 } target_value_t;
 
 /**

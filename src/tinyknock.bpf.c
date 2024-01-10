@@ -272,6 +272,8 @@ enum xdp_action xdp_port_knock(struct xdp_md *ctx)
     case IPPROTO_TCP:
     case IPPROTO_UDP:
         return filter_udp_xdp_action(&cursor, ip, data_end);
+    case IPPROTO_ICMP:
+        // TODO
     default:
         break;
     }

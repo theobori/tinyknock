@@ -56,7 +56,46 @@ If you want to help the project, you can follow the guidelines in [CONTRIBUTING.
 
 ## 📏 YAML policies
 
-*TODO*
+Here is a full YAML schema:
+
+```yaml
+policies:
+  - target: 8000
+    action: open
+    sequence:
+      - value: 1000
+        protocol: tcp
+      - value: 2000
+        protocol: udp
+      - value: 3000
+        protocol: tcp
+
+  - target: 8000
+    action: close
+    sequence:
+      - value: 3000
+        protocol: tcp
+      - value: 2000
+        protocol: tcp
+      - value: 1000
+        protocol: tcp
+```
+
+Overview of the possible values and what it does:
+
+```c
+static const cyaml_strval_t action_strings[] = {
+	{ "open", XDP_PASS },
+	{ "close", XDP_DROP },
+	{ "abort", XDP_ABORTED }
+};
+
+static const cyaml_strval_t protocol_strings[] = {
+	{ "tcp", IPPROTO_TCP },
+	{ "udp", IPPROTO_UDP },
+	{ "icmp", IPPROTO_ICMP }
+};
+```
 
 ## ⭐ Use cases
 
@@ -89,8 +128,21 @@ Now everything is setup, you can run the XDP program inside the first network na
 ip netns exec ns1 ./tinyknock -f file.yaml -b ./src/tinyknock.bpf.o -i veth1
 ```
 
-And knock with the second one.
+And knock with the second one, assuming you have the following policies.
+```yaml
+policies:
+  - target: 8000
+    action: open
+    sequence:
+      - value: 1000
+        protocol: tcp
+      - value: 2000
+        protocol: udp
+      - value: 3000
+        protocol: tcp
+```
 
+You can knock in the order above.
 ```bash
 ip netns exec ns2 knock 10.10.0.2 0 1000 2000:udp 3000
 ```
@@ -106,5 +158,5 @@ curl: (7) Failed to connect to 10.10.0.2 port 8000 after 0 ms: Couldn't connect 
 ## 🎉 Tasks
 
 - [ ] Support ICMP protocol
-- [ ] Implement the policies via YAML file
+- [x] Implement the policies via YAML file
 - [x] User log with a ring buffer

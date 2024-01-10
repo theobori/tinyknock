@@ -6,39 +6,71 @@
 
 #include "./rule.h"
 
-int rule_xfsm_fill_bpf_map(int map_fd, configuration_t *config)
-{
+#define POLICY_COUNT_MIN 1
+#define SEQUENCE_COUNT_MIN 2
+#define START_PORT 0
+
+/**
+ * @brief Process a single policy
+ * 
+ * @param map_fd 
+ * @param policy 
+ * @return int 
+ */
+static int policy_process(int map_fd, policy_t *policy) {
     xfsm_key_t k;
     xfsm_value_t v;
+    sequence_t sequence, next_sequence;
 
-    k = (xfsm_key_t) {0, IPPROTO_TCP, 0, 1000};
-    v.next_action = XDP_DROP;
-    v = (xfsm_value_t) { XDP_DROP, 0, 0};
+    unsigned short last_port = START_PORT;
+
+    if (policy->sequence_count < SEQUENCE_COUNT_MIN)
+        return EXIT_FAILURE;
+    
+    for (unsigned int i = 0; i < policy->sequence_count; i++) {
+        sequence = policy->sequence[i];
+        next_sequence = policy->sequence[i + 1];
+
+        k.step = i;
+        k.protocol = sequence.protocol;
+        k.last_port = last_port;
+        k.port = sequence.value;
+
+        if (i == policy->sequence_count - 1) {
+            v.is_next_target = 1;
+            v.next_action = policy->action;
+            v.next_port = policy->target;
+        } else {
+            v.is_next_target = 0;
+            v.next_port = next_sequence.value;
+            v.next_action = 0;
+        }
+
+        last_port = sequence.value;
+
+        bpf_map_update_elem(map_fd, &k, &v, BPF_NOEXIST);
+    }
+
     bpf_map_update_elem(map_fd, &k, &v, BPF_NOEXIST);
 
-    k = (xfsm_key_t) {1, IPPROTO_UDP, 1000, 2000};
-    v = (xfsm_value_t) { XDP_DROP, 0, 0};
+    return EXIT_SUCCESS;
+}
 
-    bpf_map_update_elem(map_fd, &k, &v, BPF_NOEXIST);
+int rule_xfsm_fill_bpf_map(int map_fd, configuration_t *config)
+{
+    int err;
+    policy_t policy;
 
-    k = (xfsm_key_t) {2, IPPROTO_TCP, 2000, 3000};
-    v = (xfsm_value_t) { XDP_PASS, 1, 8000};
+    if (config->policies_count < POLICY_COUNT_MIN)
+        return EXIT_FAILURE;
 
-    bpf_map_update_elem(map_fd, &k, &v, BPF_NOEXIST);
+    for (unsigned int i = 0; i < config->policies_count; i++) {
+        policy = config->policies[i];
 
-    k = (xfsm_key_t) {0, IPPROTO_TCP, 0, 3000};
-    v = (xfsm_value_t) { XDP_DROP, 0, 0};
-    bpf_map_update_elem(map_fd, &k, &v, BPF_NOEXIST);
-
-    k = (xfsm_key_t) {1, IPPROTO_TCP, 3000, 2000};
-    v = (xfsm_value_t) { XDP_DROP, 0, 0};
-
-    bpf_map_update_elem(map_fd, &k, &v, BPF_NOEXIST);
-
-    k = (xfsm_key_t) {2, IPPROTO_TCP, 2000, 1000};
-    v = (xfsm_value_t) { XDP_DROP, 1, 8000};
-
-    bpf_map_update_elem(map_fd, &k, &v, BPF_NOEXIST);
+        err = policy_process(map_fd, &policy);
+        if (err)
+            return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

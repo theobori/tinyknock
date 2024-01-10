@@ -4,11 +4,33 @@
 #include <cyaml/cyaml.h>
 
 /**
- * @brief Data required from the YAML
+ * @brief Representing a sequence element from a YAML data
+ * 
+ */
+typedef struct sequence_s {
+	unsigned short value;
+	unsigned int protocol;
+} sequence_t;
+
+/**
+ * @brief Data required from a YAML data
+ * 
+ */
+typedef struct policy_s {
+	unsigned short target;
+	unsigned int action;
+
+	sequence_t *sequence;
+	unsigned int sequence_count;
+} policy_t;
+
+/**
+ * @brief Top YAML data structure
  * 
  */
 typedef struct configuration_s {
-	char *unused;
+	policy_t *policies;
+	unsigned int policies_count;
 } configuration_t;
 
 /**
@@ -19,12 +41,14 @@ typedef struct configuration_s {
  * @return int 
  */
 int tinyknock_configuration_init(configuration_t **config, const char *path);
+
 /**
  * @brief Get the yaml config object
  * 
  * @return const cyaml_config_t* 
  */
 const cyaml_config_t *get_yaml_config();
+
 /**
  * @brief Get the top schema object
  * 

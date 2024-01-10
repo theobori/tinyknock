@@ -82,12 +82,12 @@ int handle_event(void *ctx, void *data, size_t data_sz)
  * @param filename 
  * @return int 
  */
-static int tinyknock_init(configuration_t *config, char *filename)
+static int tinyknock_init(configuration_t **config, char *filename)
 {
 	int err;
 
 	// Load the YAML configuration
-	err = tinyknock_configuration_init(&config, filename);
+	err = tinyknock_configuration_init(config, filename);
 	if (err) {
 		return EXIT_FAILURE;
 	}
@@ -175,7 +175,7 @@ int main(int argc, const char *argv[])
 		return xdp_detach(ifindex, arguments.xdp_prog_id);
 	
 	// Get YAML data
-	err = tinyknock_init(config, arguments.file);
+	err = tinyknock_init(&config, arguments.file);
 	if (err)
 		return EXIT_FAILURE;
 
