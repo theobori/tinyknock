@@ -2,11 +2,13 @@
 
 eBPF (XDP) port knocking with a minimal firewall that filter the incoming traffic. It is compatible with the [knock](https://github.com/jvinet/knock) client.
 
+The filtering is zero trust, it means there are zero ports allowed by default on the concerned protocol(s). Since the port knocking rules are applied at XDP level, it must take a decision on every incoming XDP packet.
+
 The rules mechanism is inspired by [OpenState](https://sdn.ieee.org/newsletter/march-2017/openstate-an-interface-for-stateful-packet-processing-in-programmable-switches) but it is not designed for a switch.
 
 > ⚠️ It is only experimental and should not run in production.
 > 
-> Note that every port knocking sequence should start with the port 0
+> Note that every port knocking sequence starts with the port 0
 > like `knock ipaddr 0 100 200 300`
 
 ## 📖 Build and run
@@ -40,7 +42,7 @@ rm -rf libcyaml
 
 You should also have `bpftool` if you need to debug.
 
-To build, you should run the following command.
+To build, run the following command.
 ```bash
 make
 ```

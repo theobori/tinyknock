@@ -1,0 +1,20 @@
+policies:
+  - target: 8000
+    action: open
+    sequence:
+      - value: 1000
+        protocol: tcp
+      - value: 2000
+        protocol: udp
+      - value: 3000
+        protocol: tcp
+
+  - target: 8000
+    action: close
+    sequence:
+      - value: 3000
+        protocol: tcp
+      - value: 2000
+        protocol: tcp
+      - value: 1000
+        protocol: tcp
