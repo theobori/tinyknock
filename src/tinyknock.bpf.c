@@ -10,6 +10,7 @@
 #include <linux/ip.h>
 #include <linux/in.h>
 #include <linux/udp.h>
+#include <linux/icmp.h>
 
 #include <asm-generic/errno-base.h>
 
@@ -68,38 +69,19 @@ static __always_inline int parse_ethhdr(void **cursor, struct ethhdr **ethhdr,
 }
 
 /**
- * @brief Parse IP header
+ * @brief Parse IP header of protocol based on IP (TCP, UDP, etc..)
  * 
  * @param cursor 
- * @param ip 
+ * @param hdr 
  * @param data_end 
- * @return int 
+ * @param hdrsize 
+ * @return __always_inline 
  */
-static __always_inline int parse_iphdr(void **cursor, struct iphdr **ip,
-    void *data_end)
+static __always_inline int parse_iphdr(void **cursor, void **hdr,
+    void *data_end, __u64 hdrsize)
 {
-    *ip = *cursor;
-    *cursor += sizeof(struct iphdr);
-
-    return *cursor > data_end;
-}
-
-/**
- * @brief Parse UDP/TCP header.
- * 
- *  This function is also used for TCP because the `dest` field is
- * at the same location.
- * 
- * @param cursor 
- * @param udp 
- * @param data_end 
- * @return int 
- */
-static __always_inline int parse_udphdr(void **cursor, struct udphdr **udp,
-    void *data_end)
-{
-    *udp = *cursor;
-    *cursor += sizeof(struct udphdr);
+    *hdr = *cursor;
+    *cursor += hdrsize;
 
     return *cursor > data_end;
 }
@@ -222,18 +204,40 @@ static __always_inline enum xdp_action filter_xdp_action(__u32 addr,
  * @param cursor 
  * @param ip 
  * @param data_end 
- * @return __always_inline enum 
+ * @return enum xdp_action 
  */
 static __always_inline enum xdp_action filter_udp_xdp_action(void **cursor,
     struct iphdr *ip, void *data_end)
 {
     struct udphdr *udp;
     
-    int err = parse_udphdr(cursor, &udp, data_end);
+    int err = parse_iphdr(cursor, (void **) &udp, data_end, sizeof(*udp));
     if (err)
         return XDP_DROP;
 
     return filter_xdp_action(bpf_ntohl(ip->saddr), bpf_htons(udp->dest),
+        ip->protocol);
+}
+
+/**
+ * @brief Filter the `addr` with `code` for the ICMP protocol
+ * 
+ * 
+ * @param cursor 
+ * @param ip 
+ * @param data_end 
+ * @return enum xdp_action 
+ */
+static __always_inline enum xdp_action filter_icmp_xdp_action(void **cursor,
+    struct iphdr *ip, void *data_end)
+{
+    struct icmphdr *icmp;
+    
+    int err = parse_iphdr(cursor, (void **) &icmp, data_end, sizeof(*icmp));
+    if (err)
+        return XDP_DROP;
+
+    return filter_xdp_action(bpf_ntohl(ip->saddr), icmp->code,
         ip->protocol);
 }
 
@@ -262,7 +266,7 @@ int xdp_port_knock(struct xdp_md *ctx)
         return XDP_PASS;
 
     struct iphdr *ip;
-    err = parse_iphdr(&cursor, &ip, data_end);
+    err = parse_iphdr(&cursor, (void **) &ip, data_end, sizeof(*ip));
     if (err) {
         return XDP_DROP;
     }
@@ -273,7 +277,7 @@ int xdp_port_knock(struct xdp_md *ctx)
     case IPPROTO_UDP:
         return filter_udp_xdp_action(&cursor, ip, data_end);
     case IPPROTO_ICMP:
-        // TODO
+        return filter_icmp_xdp_action(&cursor, ip, data_end);
     default:
         break;
     }

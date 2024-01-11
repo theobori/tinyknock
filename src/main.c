@@ -65,7 +65,7 @@ int handle_event(void *ctx, void *data, size_t data_sz)
 	strftime(ts, sizeof(ts), "%H:%M:%S", tm);
 
 	printf(
-		"%-8s Step %d, knocking on port %hu with protocol %d\n",
+		"%-8s Step %d, knocking with value %hu with protocol %d\n",
 		ts, e->step, e->port, e->protocol
 	);
 

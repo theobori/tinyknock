@@ -1,6 +1,6 @@
 # 🐝 tinyknock
 
-eBPF (XDP) port knocking with a minimal firewall that filter the incoming traffic. It is compatible with the [knock](https://github.com/jvinet/knock) client.
+eBPF (XDP) port knocking, it is compatible with the [knock](https://github.com/jvinet/knock) client.
 
 The filtering is zero trust, it means there are zero ports allowed by default on the concerned protocol(s). Since the port knocking rules are applied at XDP level, it must take a decision on every incoming XDP packet.
 
@@ -136,17 +136,18 @@ policies:
   - target: 8000
     action: open
     sequence:
-      - value: 1000
+      - value: 1000 # TCP port
         protocol: tcp
-      - value: 2000
+      - value: 2000 # UDP port
         protocol: udp
-      - value: 3000
-        protocol: tcp
+      - value: 4 # ICMP code
+        protocol: icmp
 ```
 
 You can knock in the order above.
 ```bash
-ip netns exec ns2 knock 10.10.0.2 0 1000 2000:udp 3000
+ip netns exec ns2 knock 10.10.0.2 0 1000 2000:udp
+ip netns exec ns2 hping3 10.10.0.2 --icmpcode 4
 ```
 
 If it worked, you should have a response like this:
@@ -159,6 +160,6 @@ curl: (7) Failed to connect to 10.10.0.2 port 8000 after 0 ms: Couldn't connect 
 
 ## 🎉 Tasks
 
-- [ ] Support ICMP protocol
+- [x] Support ICMP protocol
 - [x] Implement the policies via YAML file
 - [x] User log with a ring buffer
