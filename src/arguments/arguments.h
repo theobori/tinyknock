@@ -18,6 +18,7 @@ typedef struct arguments_s {
     char *file;
     char *bpf_object_file;
     unsigned int xdp_prog_id;
+    unsigned int xdp_mode;
 } arguments_t;
 
 /**

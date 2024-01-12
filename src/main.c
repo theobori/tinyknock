@@ -100,9 +100,12 @@ static int tinyknock_init(configuration_t **config, char *filename)
  * 
  * @param ifindex 
  * @param filename 
+ * @param xdp_mode 
  * @return int 
  */
-static int xdp_init(unsigned int ifindex, char *filename) {
+static int xdp_init(unsigned int ifindex, char *filename,
+	unsigned int xdp_mode)
+{
 	int err;
 
 	if (!filename) {
@@ -118,7 +121,7 @@ static int xdp_init(unsigned int ifindex, char *filename) {
     }
 
 	// Attach the XDP program
-	err = xdp_program__attach(xdp_prog, ifindex, XDP_MODE_SKB, 0);
+	err = xdp_program__attach(xdp_prog, ifindex, xdp_mode, 0);
 	if (err) {
 		printf("Error, Set xdp fd on %d failed\n", ifindex);
 		return err;
@@ -139,12 +142,14 @@ static int xdp_init(unsigned int ifindex, char *filename) {
  * 
  * @param ifindex 
  * @param xdp_prog_id 
+ * @param xdp_mode 
  * @return int 
  */
-static int xdp_detach(unsigned int ifindex, unsigned int xdp_prog_id)
+static int xdp_detach(unsigned int ifindex, unsigned int xdp_prog_id,
+	unsigned int xdp_mode)
 {
 	return xdp_program__detach(
-		xdp_program__from_id(xdp_prog_id), ifindex, XDP_MODE_SKB, 0
+		xdp_program__from_id(xdp_prog_id), ifindex, xdp_mode, 0
 	);
 }
 
@@ -157,6 +162,9 @@ int main(int argc, const char *argv[])
 	struct ring_buffer *rb = NULL;
 
 	arguments_t arguments = arguments_create_and_parse(argc, argv);
+
+	if (!arguments.xdp_mode)
+        arguments.xdp_mode = 2;
 	
 	if (argc < ARG_COUNT || !arguments_check(&arguments)) {
 		fprintf(stderr, "Check the -h|--help flag\n");
@@ -172,7 +180,8 @@ int main(int argc, const char *argv[])
 
 	// Detach XDP prog if --detach is set
 	if (arguments.xdp_prog_id)
-		return xdp_detach(ifindex, arguments.xdp_prog_id);
+		return xdp_detach(ifindex, arguments.xdp_prog_id,
+			arguments.xdp_mode);
 	
 	// Get YAML data
 	err = tinyknock_init(&config, arguments.file);
@@ -180,7 +189,8 @@ int main(int argc, const char *argv[])
 		return EXIT_FAILURE;
 
 	// Load then attach the XDP prog and get a BPF obj
-	err = xdp_init(ifindex, arguments.bpf_object_file);
+	err = xdp_init(ifindex, arguments.bpf_object_file,
+		arguments.xdp_mode);
 	if (err)
 		return EXIT_FAILURE;
 	

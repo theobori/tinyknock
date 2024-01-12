@@ -20,15 +20,19 @@ void arguments_parse(arguments_t *arguments, int argc, const char *argv[])
     struct argparse_option options[] = {
         OPT_HELP(),
         OPT_GROUP("Required options"),
-        OPT_STRING('f', "file", &arguments->file, "Policies YAML file path", NULL, 0, 0),
+        OPT_STRING('f', "file", &arguments->file, "Filters YAML file path", NULL, 0, 0),
         OPT_STRING('i', "ifname", &arguments->ifname, "Network interface name", NULL, 0, 0),
         OPT_STRING('b', "bpf-file", &arguments->bpf_object_file, "BPF object file path", NULL, 0, 0),
         OPT_INTEGER('d', "detach", &arguments->xdp_prog_id, "Detach an XDP program from a network interface (with its ID)", NULL, 0, 0),
+        OPT_INTEGER('m', "xdp-mode", &arguments->xdp_mode, "XDP mode (by default 2)", NULL, 0, 0),
         OPT_END(),
     };
 
     argparse_init(&argparse, options, usages, 0);
-    argparse_describe(&argparse, DESCRIPTION, NULL);
+    argparse_describe(&argparse, DESCRIPTION, "\nXDP modes:\n"
+        "    1 -> XDP_MODE_NATIVE\n"
+        "    2 -> XDP_MODE_SKB\n"
+        "    3 -> XDP_MODE_HW\n");
     argparse_parse(&argparse, argc, argv);
 }
 
@@ -41,5 +45,7 @@ arguments_t arguments_create_and_parse(int argc, const char *argv[]) {
 }
 
 bool arguments_check(arguments_t *arguments) {
-    return arguments->ifname;
+    return arguments->ifname &&
+        arguments->xdp_mode > 0 &&
+        arguments->xdp_mode < 4;
 }
