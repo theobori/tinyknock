@@ -152,14 +152,13 @@ ip netns exec ns2 hping3 10.10.0.2 --icmpcode 4
 
 If it worked, you should have a response like this:
 ```bash
-ip netns exec ns2 knock 10.10.0.2 0 1000 2000:udp 3000
-
 ip netns exec ns2 curl 10.10.0.2:8000
 curl: (7) Failed to connect to 10.10.0.2 port 8000 after 0 ms: Couldn't connect to server
 ```
 
 ## 🎉 Tasks
 
+- [ ] Fancier user stdout print (ring buffer event)
 - [x] Support ICMP protocol
 - [x] Implement the policies via YAML file
 - [x] User log with a ring buffer
