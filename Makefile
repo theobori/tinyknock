@@ -1,5 +1,4 @@
 CC = clang
-BPFTOOL = bpftool
 
 TARGET = tinyknock
 ARCH = $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/')
@@ -10,6 +9,7 @@ USER_C = $(SRC_DIR)/main.c \
 		 $(SRC_DIR)/configuration/configuration.c \
 		 $(SRC_DIR)/argparse/argparse.c \
 		 $(SRC_DIR)/arguments/arguments.c \
+		 $(SRC_DIR)/common/common.c \
 		 $(SRC_DIR)/rule/rule.c
 
 USER_OBJ = $(USER_C:.c=.o)
@@ -22,22 +22,16 @@ CFLAGS = -Wall -g
 
 all: $(TARGET) $(BPF_OBJ)
 
-$(TARGET): $(USER_OBJ) #$(USER_SKEL)
+$(TARGET): $(USER_OBJ)
 	$(CC) -Wall -o $(TARGET) $(USER_OBJ) -lbpf -lelf -lz -lcyaml -lxdp
 
-$(BPF_OBJ): %.o: $(BPF_C) #$(SRC_DIR)/vmlinux.h
+$(BPF_OBJ): %.o: $(BPF_C)
 	$(CC) \
 	    -target bpf \
         -D __TARGET_ARCH_$(ARCH) \
 	    -Wall \
 	    -O2 -g -o $@ -c $<
 	llvm-strip -g $@
-
-# $(USER_SKEL): $(BPF_OBJ)
-# 	$(BPFTOOL) gen skeleton $< > $@
-
-# $(SRC_DIR)/vmlinux.h:
-# 	$(BPFTOOL) btf dump file /sys/kernel/btf/vmlinux format c > $@
 
 clean:
 	$(RM) \

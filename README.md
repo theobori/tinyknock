@@ -158,7 +158,7 @@ curl: (7) Failed to connect to 10.10.0.2 port 8000 after 0 ms: Couldn't connect 
 
 ## 🎉 Tasks
 
-- [ ] Fancier user stdout print (ring buffer event)
+- [x] Fancier user stdout print (ring buffer event)
 - [x] Support ICMP protocol
 - [x] Implement the policies via YAML file
 - [x] User log with a ring buffer

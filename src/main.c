@@ -14,6 +14,7 @@
 #include "./arguments/arguments.h"
 #include "./rule/rule.h"
 #include "./event/sequence_event.h"
+#include "./common/common.h"
 
 #define ARG_COUNT 2
 #define XDP_SECTION_NAME "xdp"
@@ -55,24 +56,31 @@ static struct xdp_program *xdp_prog = NULL;
  */
 int handle_event(void *ctx, void *data, size_t data_sz)
 {
-	const sequence_event_t *e = data;
+	int err;
 	struct tm *tm;
 	char ts[32];
+	char proto_name[10];
 	time_t t;
+	
+	sequence_event_t *e = data;
 
 	time(&t);
 	tm = localtime(&t);
 	strftime(ts, sizeof(ts), "%H:%M:%S", tm);
 
+	err = l4_proto_resolve(proto_name, &e->protocol, NAME);
+	if (err)
+		return EXIT_FAILURE;
+
 	printf(
-		"%-8s Step %d, knocking with value %hu with protocol %d\n",
-		ts, e->step, e->port, e->protocol
+		"%-8s Step %d, knocking with value %hu with protocol %s\n",
+		ts, e->step, e->port, proto_name
 	);
 
 	if (e->is_target)
 		printf("%-8s Triggered port %d\n", ts, e->next_port);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 /**
