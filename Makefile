@@ -34,14 +34,12 @@ $(BPF_OBJ): %.o: $(BPF_C)
 	llvm-strip -g $@
 
 clean:
-	$(RM) \
-		$(BPF_OBJ) \
-		$(USER_OBJ) \
-		$(TARGET) \
-		$(USER_SKEL)
+	$(RM) $(USER_OBJ)
 
 fclean: clean
-	$(RM) $(SRC_DIR)/vmlinux.h
+	$(RM) \
+		$(BPF_OBJ) \
+		$(TARGET)
 
 re: fclean all
 

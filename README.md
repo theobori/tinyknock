@@ -130,6 +130,12 @@ Now everything is setup, you can run the XDP program inside the first network na
 ip netns exec ns1 ./tinyknock -f file.yaml -b ./src/tinyknock.bpf.o -i veth1
 ```
 
+If you this error `libxdp: No bpffs found at /sys/fs/bpf`, you can mount the filesystem using the following command.
+
+```bash
+mount -t bpf bpf /sys/fs/bpf/
+```
+
 And knock with the second one, assuming you have the following policies.
 ```yaml
 policies:
